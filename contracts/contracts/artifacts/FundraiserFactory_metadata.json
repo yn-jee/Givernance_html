@@ -1,0 +1,132 @@
+{
+	"compiler": {
+		"version": "0.8.25+commit.b61c2a91"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "fundraiserAddress",
+						"type": "address"
+					}
+				],
+				"name": "FundraiserCreated",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_targetAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_finishTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address payable",
+						"name": "_beneficiary",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "_description",
+						"type": "string"
+					}
+				],
+				"name": "createFundraiser",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "fundraisers",
+				"outputs": [
+					{
+						"internalType": "contract Fundraiser",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getFundraisers",
+				"outputs": [
+					{
+						"internalType": "contract Fundraiser[]",
+						"name": "",
+						"type": "address[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/contracts/FundraiserFactory.sol": "FundraiserFactory"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/contracts/Fundraiser.sol": {
+			"keccak256": "0xec29033509803117eece3b3a346a5060af1c40b6843bd1309fa184819144a063",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://abe5530a3b9b24227d4a90970c8bfeb0388341efa0cdff8435cc6c70171f3e0f",
+				"dweb:/ipfs/QmTyoB3VLUZrViPNsTY7DJsJj9QXxVnaco437rMQW9ywx4"
+			]
+		},
+		"contracts/contracts/FundraiserFactory.sol": {
+			"keccak256": "0x42723515194c53bd77023ba07383be78cd17925ba5488878ba00068686bcb1c6",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://141f4d08fb8874c159e794893df4a3eda20f5414e51c65f90476fd06fc412db8",
+				"dweb:/ipfs/QmY1EPv6q6jkHXUcE1Hix6URhf1FoVtpKfQpFYVYJgbtwv"
+			]
+		}
+	},
+	"version": 1
+}
