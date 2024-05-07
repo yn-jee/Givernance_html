@@ -17,14 +17,20 @@
     </div>
     <div class="createFundraiser">
         <h2>Create a New Fundraiser</h2>
-        <div>
-            <input type="text" id="fundraiserName" placeholder="이름">
-            <input type="text" id="fundraiserTargetAmount" placeholder="목표 금액">
-            <input type="text" id="fundraiserFinishTime" placeholder="종료 시점">
-            <input type="text" id="fundraiserBeneficiary" placeholder="출금 지갑">
-            <br>
-            <textarea id="fundraiserDescription"></textarea>
-            <br>
+        <div class="fundraiserInput">
+            <div class="fundraiserInput">
+                <input type="text" id="fundraiserName" placeholder="모금함 이름">
+            </div>
+            <div class="fundraiserInput">
+                <input id="fundraiserTargetAmount" placeholder="목표 금액">
+            </div>
+            <div class="fundraiserInput">
+                <input id="fundraiserFinishTime" placeholder="종료 시점">
+            </div>
+            <div class="fundraiserInput">
+                <input id="fundraiserBeneficiary" placeholder="출금 지갑">
+            </div>
+            <textarea id="fundraiserDescription" placeholder="상세 설명"></textarea>
             <button id="registerFundraiser">Register</button>
         </div>
     </div>
