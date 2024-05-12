@@ -36,11 +36,6 @@
 						"type": "uint256"
 					},
 					{
-						"internalType": "address payable",
-						"name": "_beneficiary",
-						"type": "address"
-					},
-					{
 						"internalType": "string",
 						"name": "_description",
 						"type": "string"
@@ -112,19 +107,19 @@
 	},
 	"sources": {
 		"contracts/contracts/Fundraiser.sol": {
-			"keccak256": "0xec29033509803117eece3b3a346a5060af1c40b6843bd1309fa184819144a063",
+			"keccak256": "0x6ddcacabb9fef8eb42df0760865fba6aba945ec8dcf6a3a8d90de2bb65b0bbad",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://abe5530a3b9b24227d4a90970c8bfeb0388341efa0cdff8435cc6c70171f3e0f",
-				"dweb:/ipfs/QmTyoB3VLUZrViPNsTY7DJsJj9QXxVnaco437rMQW9ywx4"
+				"bzz-raw://df4ce04b15e1e9ee66daf4d21b11b3553afc142b7403942565db75b53bf6fbcd",
+				"dweb:/ipfs/QmdDsMBKKjk9dDqCpkRbfuJMTAQQaeEQHgbSxjWPbEbQYD"
 			]
 		},
 		"contracts/contracts/FundraiserFactory.sol": {
-			"keccak256": "0x42723515194c53bd77023ba07383be78cd17925ba5488878ba00068686bcb1c6",
+			"keccak256": "0x463dd5a002cc944f702630ba5d5993d061b7b8f8215b9401db8bec8bf4dfed13",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://141f4d08fb8874c159e794893df4a3eda20f5414e51c65f90476fd06fc412db8",
-				"dweb:/ipfs/QmY1EPv6q6jkHXUcE1Hix6URhf1FoVtpKfQpFYVYJgbtwv"
+				"bzz-raw://c95e616f73baac4a2a5edc8e9c659fea7ae44b03329fcd6a60eaeba8eb7b1686",
+				"dweb:/ipfs/QmfRDgs4TS8TLYPT8hJuxswxKrnkKVZgsh65GPgM1dq631"
 			]
 		}
 	},

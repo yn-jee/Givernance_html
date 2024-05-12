@@ -26,11 +26,6 @@
 						"internalType": "string",
 						"name": "_description",
 						"type": "string"
-					},
-					{
-						"internalType": "address payable",
-						"name": "_beneficiary",
-						"type": "address"
 					}
 				],
 				"stateMutability": "nonpayable",
@@ -201,11 +196,11 @@
 	},
 	"sources": {
 		"contracts/contracts/Fundraiser.sol": {
-			"keccak256": "0xec29033509803117eece3b3a346a5060af1c40b6843bd1309fa184819144a063",
+			"keccak256": "0x6ddcacabb9fef8eb42df0760865fba6aba945ec8dcf6a3a8d90de2bb65b0bbad",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://abe5530a3b9b24227d4a90970c8bfeb0388341efa0cdff8435cc6c70171f3e0f",
-				"dweb:/ipfs/QmTyoB3VLUZrViPNsTY7DJsJj9QXxVnaco437rMQW9ywx4"
+				"bzz-raw://df4ce04b15e1e9ee66daf4d21b11b3553afc142b7403942565db75b53bf6fbcd",
+				"dweb:/ipfs/QmdDsMBKKjk9dDqCpkRbfuJMTAQQaeEQHgbSxjWPbEbQYD"
 			]
 		}
 	},

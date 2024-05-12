@@ -1,3 +1,4 @@
+import { LoadingAnimation } from './LoadingAnimation.js';
 
 async function fetchAllEventsFromContract(provider) {
     try {
@@ -5,8 +6,21 @@ async function fetchAllEventsFromContract(provider) {
         const signer = provider.getSigner();
         console.log('Provider and signer initialized.');
 
-        const fundraiserFactoryAddress = "0x207dffcd5921401dcb87ab60b7a75f841dc6c9ad";
+        const fundraiserFactoryAddress = "0xbf92fbee16dd1fb5a1dcffafd71edbec9460eb5b";
         const fundraiserFactoryABI = [
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "fundraiserAddress",
+                        "type": "address"
+                    }
+                ],
+                "name": "FundraiserCreated",
+                "type": "event"
+            },
             {
                 "inputs": [
                     {
@@ -25,11 +39,6 @@ async function fetchAllEventsFromContract(provider) {
                         "type": "uint256"
                     },
                     {
-                        "internalType": "address payable",
-                        "name": "_beneficiary",
-                        "type": "address"
-                    },
-                    {
                         "internalType": "string",
                         "name": "_description",
                         "type": "string"
@@ -41,17 +50,23 @@ async function fetchAllEventsFromContract(provider) {
                 "type": "function"
             },
             {
-                "anonymous": false,
                 "inputs": [
                     {
-                        "indexed": false,
-                        "internalType": "address",
-                        "name": "fundraiserAddress",
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "fundraisers",
+                "outputs": [
+                    {
+                        "internalType": "contract Fundraiser",
+                        "name": "",
                         "type": "address"
                     }
                 ],
-                "name": "FundraiserCreated",
-                "type": "event"
+                "stateMutability": "view",
+                "type": "function"
             },
             {
                 "inputs": [],
@@ -118,11 +133,6 @@ async function fetchAllFundraiserDetails(fundraiserAddresses, provider) {
                     "internalType": "string",
                     "name": "_description",
                     "type": "string"
-                },
-                {
-                    "internalType": "address payable",
-                    "name": "_beneficiary",
-                    "type": "address"
                 }
             ],
             "stateMutability": "nonpayable",
@@ -270,7 +280,6 @@ async function fetchAllFundraiserDetails(fundraiserAddresses, provider) {
         const contract = new ethers.Contract(address, fundraiserABI, provider);
         const name = await contract.name();
         const description = await contract.description();
-        const beneficiary = await contract.beneficiary();
         const targetAmount = ethers.utils.formatEther(await contract.targetAmount());
         const finishTime = new Date((await contract.finishTime()).toNumber() * 1000).toLocaleString();
         const raisedAmount = ethers.utils.formatEther(await contract.raisedAmount());
@@ -280,7 +289,6 @@ async function fetchAllFundraiserDetails(fundraiserAddresses, provider) {
             address,
             name,
             description,
-            beneficiary,
             targetAmount,
             finishTime,
             raisedAmount,
@@ -292,6 +300,12 @@ async function fetchAllFundraiserDetails(fundraiserAddresses, provider) {
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
+    const animation = new LoadingAnimation('../images/loadingAnimation.json');
+    await animation.loadAnimation();
+
+    const overlay = document.getElementById('loading-overlay');
+    overlay.style.display = 'flex'; // 오버레이 활성화
+
     try {
         await window.ethereum.request({ method: "eth_requestAccounts" });
         const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -300,18 +314,25 @@ document.addEventListener('DOMContentLoaded', async function () {
         const details = await fetchAllFundraiserDetails(fundraiserAddresses, provider);
         console.log('Fundraiser Details:', details);
         const container = document.querySelector('.fundraiserContainer');
+        
         details.forEach(detail => {
             const item = document.createElement('div');
+            const postAddress = "post.html?contractAddress=" + detail.address;
             item.id = 'fundraiserBox';
             item.innerHTML = `
             <img class="donationBox" src="images/donationBox.png" title="donationBox">
             <h2 class="fundraiser-title">${detail.name}</h2>
-            <p class="target-amount">Target Amount is <b>${detail.targetAmount} gwei</b></p>
-            <p class="finish-date">Open untli <b>${detail.finishTime}</b></p>
+            <p class="target-amount">Target Amount is <b>${detail.targetAmount} ETH</b></p>
+            <p class="finish-date">Open until <b>${detail.finishTime}</b></p>
             `;
+            item.addEventListener('click', function() {
+                window.location.href = postAddress;
+            });
             container.appendChild(item);
         });
     } catch (error) {
         console.error("Initialization error:", error);
+    } finally {
+        overlay.style.display = 'none'; // 오버레이 비활성화
     }
 });

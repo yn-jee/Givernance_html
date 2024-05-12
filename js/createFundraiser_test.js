@@ -1,13 +1,40 @@
+import { LoadingAnimation } from './LoadingAnimation.js';
+
+function getCurrentDateTime() {
+    const now = new Date();
+
+    // 현재 시간을 `datetime-local` 포맷으로 변환 (ISO 포맷에서 분까지만 사용)
+    const dateTimeLocal = now.toISOString().slice(0, 16);
+
+    return dateTimeLocal;
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
+    const animation = new LoadingAnimation('../images/loadingAnimation.json');
+    await animation.loadAnimation();
+
     try {
-        // Requesting Ethereum accounts and initializing provider
+        animation.startTask(); // 로딩 시작
         await window.ethereum.request({ method: "eth_requestAccounts" });
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
         console.log('Provider and signer initialized.');
 
-        const fundraiserFactoryAddress = "0x207dffcd5921401dcb87ab60b7a75f841dc6c9ad";
+        const fundraiserFactoryAddress = "0xbf92fbee16dd1fb5a1dcffafd71edbec9460eb5b";
         const fundraiserFactoryABI = [
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "fundraiserAddress",
+                        "type": "address"
+                    }
+                ],
+                "name": "FundraiserCreated",
+                "type": "event"
+            },
             {
                 "inputs": [
                     {
@@ -26,11 +53,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         "type": "uint256"
                     },
                     {
-                        "internalType": "address payable",
-                        "name": "_beneficiary",
-                        "type": "address"
-                    },
-                    {
                         "internalType": "string",
                         "name": "_description",
                         "type": "string"
@@ -42,17 +64,23 @@ document.addEventListener('DOMContentLoaded', async function () {
                 "type": "function"
             },
             {
-                "anonymous": false,
                 "inputs": [
                     {
-                        "indexed": false,
-                        "internalType": "address",
-                        "name": "fundraiserAddress",
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "fundraisers",
+                "outputs": [
+                    {
+                        "internalType": "contract Fundraiser",
+                        "name": "",
                         "type": "address"
                     }
                 ],
-                "name": "FundraiserCreated",
-                "type": "event"
+                "stateMutability": "view",
+                "type": "function"
             },
             {
                 "inputs": [],
@@ -68,34 +96,54 @@ document.addEventListener('DOMContentLoaded', async function () {
                 "type": "function"
             }
         ];
+
         const fundraiserFactory = new ethers.Contract(fundraiserFactoryAddress, fundraiserFactoryABI, signer);
         console.log('Contract initialized.');
 
-        // Listen for FundraiserCreated events from the contract
+        // FundraiserCreated 이벤트 리스너
         fundraiserFactory.on("FundraiserCreated", (fundraiserAddress) => {
             console.log(`New Fundraiser Created at: ${fundraiserAddress}`);
             alert(`New Fundraiser Created at: ${fundraiserAddress}`);
         });
 
         document.getElementById('registerFundraiser').addEventListener('click', async function() {
+            animation.startTask(); // 로딩 시작
             const name = document.getElementById('fundraiserName').value;
-            const targetAmount = ethers.utils.parseEther(document.getElementById('fundraiserTargetAmount').value);
-            const finishTime = Math.floor(new Date(document.getElementById('fundraiserFinishTime').value).getTime() / 1000);
-            const beneficiary = document.getElementById('fundraiserBeneficiary').value;
+            const targetAmountInput = document.getElementById('fundraiserTargetAmount').value;
+            const targetAmount = ethers.utils.parseUnits(targetAmountInput, 'gwei');
+            console.log('Target Amount (Ether):', targetAmount);
+
+            const finishTimeElement = document.getElementById('fundraiserFinishTime');
+            finishTimeElement.min = getCurrentDateTime();
+            const finishTimeInput = finishTimeElement.value;
+            if (!finishTimeInput) {
+                console.error('Finish time is not provided.');
+                alert('Please provide a finish time.');
+                animation.endTask(); // 로딩 종료
+                return;
+            }
+            const finishTimeUnix = Math.floor(new Date(finishTimeInput).getTime() / 1000);
+            console.log('Finish Time (Unix):', finishTimeUnix);
+
             const description = document.getElementById('fundraiserDescription').value;
 
             try {
-                const transactionResponse = await fundraiserFactory.createFundraiser(name, targetAmount, finishTime, beneficiary, description);
+                const transactionResponse = await fundraiserFactory.createFundraiser(name, targetAmount, finishTimeUnix, description);
                 await transactionResponse.wait();
                 console.log('Fundraiser created:', transactionResponse);
                 alert('Fundraiser has been registered successfully!');
             } catch (error) {
                 console.error('Failed to register fundraiser:', error);
                 alert('Error registering the fundraiser. Please check the console for more details.');
+            } finally {
+                animation.endTask(); // 로딩 종료
             }
         });
+
     } catch (error) {
         console.error("Error initializing application:", error);
+    } finally {
+        animation.endTask(); // 로딩 종료
     }
 });
 

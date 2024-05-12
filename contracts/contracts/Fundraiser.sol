@@ -12,21 +12,21 @@ contract Fundraiser {
     uint256 public raisedAmount = 0;
     mapping(address => uint256) public donations;
 
-    constructor(string memory _name, uint256 _targetAmount, uint256 _finishTime, string memory _description, address payable _beneficiary) {
+    constructor(string memory _name, uint256 _targetAmount, uint256 _finishTime,  string memory _description) {
         owner = msg.sender;
         name = _name;
         targetAmount = _targetAmount;
-        finishTime = block.timestamp + _finishTime * 1 days;
+        finishTime = _finishTime; // Directly use the Unix timestamp provided
         description = _description;
-        beneficiary = _beneficiary;
     }
+
 
     //event DonationReceived(address indexed donor, uint amount);
 
     function donate() external payable {
         require(block.timestamp < finishTime, "This fundraising is over");
         require(msg.value > 0, "Donation must be greater than 0");
-        (bool success, ) = beneficiary.call{value: msg.value}("");
+        (bool success, ) = owner.call{value: msg.value}("");
         require(success, "Failed to send money");
         //emit DonationReceived(msg.sender, msg.value);
         donations[msg.sender] += msg.value;
