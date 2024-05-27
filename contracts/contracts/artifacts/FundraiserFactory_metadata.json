@@ -39,6 +39,28 @@
 						"internalType": "string",
 						"name": "_description",
 						"type": "string"
+					},
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "name",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "quantity",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "price",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct FundraisingLib.Item[]",
+						"name": "items",
+						"type": "tuple[]"
 					}
 				],
 				"name": "createFundraiser",
@@ -107,19 +129,27 @@
 	},
 	"sources": {
 		"contracts/contracts/Fundraiser.sol": {
-			"keccak256": "0x6ddcacabb9fef8eb42df0760865fba6aba945ec8dcf6a3a8d90de2bb65b0bbad",
+			"keccak256": "0xec47cc414e4dad683bf480f6f0c86f2db7bac202e0c10390f0c49da019feb8cb",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://df4ce04b15e1e9ee66daf4d21b11b3553afc142b7403942565db75b53bf6fbcd",
-				"dweb:/ipfs/QmdDsMBKKjk9dDqCpkRbfuJMTAQQaeEQHgbSxjWPbEbQYD"
+				"bzz-raw://3ac69799822be95452e5fea34aa578362263ad860a4715e07fc40b512cc966bd",
+				"dweb:/ipfs/QmSNcnK62jtD9P7gQWDujeooKarCaKvQqb6EFDBfNvyqos"
 			]
 		},
 		"contracts/contracts/FundraiserFactory.sol": {
-			"keccak256": "0x463dd5a002cc944f702630ba5d5993d061b7b8f8215b9401db8bec8bf4dfed13",
+			"keccak256": "0x66b8afd61cfa4e3326c0730996d89eb5c894c6c76e37409c8b944d5520bde3e6",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://c95e616f73baac4a2a5edc8e9c659fea7ae44b03329fcd6a60eaeba8eb7b1686",
-				"dweb:/ipfs/QmfRDgs4TS8TLYPT8hJuxswxKrnkKVZgsh65GPgM1dq631"
+				"bzz-raw://d8b25ba5ce22f8e42a9bab158c4d92e50c99cf6a147fa1c17cdcb3d26e56dd38",
+				"dweb:/ipfs/QmWuAM6Ng2V6wDicbKgXSK8Vo2hPnPSB2pqmzP6WUF1gsZ"
+			]
+		},
+		"contracts/contracts/FundraisingLib.sol": {
+			"keccak256": "0x2d08d50edde07359a1f2aa66abc69243dc6eb2fc8e57ceb7ff18acf614123ff4",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://5c9213754e4d9a3c8f07af15a46234017e139a49d8752adb9c4769776765894e",
+				"dweb:/ipfs/QmUN26RKbSJZsDDnEwiejMeduf1nUrNYE8KBDTV3t9gQ2h"
 			]
 		}
 	},

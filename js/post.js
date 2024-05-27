@@ -1,4 +1,7 @@
 import { LoadingAnimation } from './LoadingAnimation.js';
+import { minidenticonSvg } from 'https://cdn.jsdelivr.net/npm/minidenticons@4.2.1/minidenticons.min.js';
+import { fundraiserFactoryAddress, fundraiserFactoryABI, fundraiserABI } from './contractConfig.js';
+
 
 const animation = new LoadingAnimation('../images/loadingAnimation.json');
 await animation.loadAnimation();
@@ -12,200 +15,246 @@ async function initializeProvider() {
     return new ethers.providers.Web3Provider(window.ethereum);
 }
 
+
+async function getEvents(provider, fundraiserFactoryAddress) {
+    const fundraiserFactory = new ethers.Contract(fundraiserFactoryAddress, fundraiserFactoryABI, provider);
+
+    const fromBlock = 0;
+    const toBlock = 'latest';
+    const events = await fundraiserFactory.queryFilter(fundraiserFactory.filters.FundraiserCreated(), fromBlock, toBlock);
+    return events;
+}
+
+async function getFundraiserCreatorAddresses(provider, events, _fundraiserAddress) {
+    for (let event of events) {
+        const txHash = event.transactionHash;
+        const tx = await provider.getTransaction(txHash);
+        const creatorAddress = tx.from;
+        if (_fundraiserAddress == event.args.fundraiserAddress){
+            return creatorAddress;
+        }
+    }
+}
+
+function trimAddress(address) {
+    return `${address.slice(0, 7)}...${address.slice(-5)}`;
+}
+
+function copyToClipboard(text) {
+    // navigator.clipboard 지원 여부 확인
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Address copied to clipboard!');
+        }).catch(err => {
+            console.error('Error copying text to clipboard: ', err);
+        });
+    } else {
+
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        // 화면 밖으로
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('Address copied to clipboard!');
+        } catch (err) {
+            console.error('Error copying text to clipboard: ', err);
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+}
+
+
+// 트랜잭션 해시를 이용하여 생성된 블록 번호를 가져오는 함수
+async function getContractCreationBlock(provider, events, _fundraiserAddress) {
+    for (let event of events) {
+        const txHash = event.transactionHash;
+        const tx = await provider.getTransaction(txHash);
+        if (_fundraiserAddress === event.args.fundraiserAddress) {
+            return tx.blockNumber;
+        }
+    }
+    throw new Error('Fundraiser address not found in events');
+}
+
+// 타임스탬프 가져오기
+async function getBlockTimestamp(provider, blockNumber) {
+    const block = await provider.getBlock(blockNumber);
+    return block.timestamp;
+}
+
+// 남은 금액 계산하기
+/*function remainingGoal(item) {
+    console.log(item.name);
+    const totalPrice = item.price * item.quantity;
+    const remainingGoal = targetAmount - totalPrice;
+    return remainingGoal;
+}*/
+
 // 컨트랙트 정보를 가져와 페이지에 표시하는 함수
-async function fetchAndDisplayFundraiserDetails(provider, address) {
+async function fetchAndDisplayFundraiserDetails(provider, address, factoryAddress) {
     try {
         animation.startTask();
 
-        const fundraiserABI = [
-            {
-                "inputs": [
-                    {
-                        "internalType": "string",
-                        "name": "_name",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "_targetAmount",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "_finishTime",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "_description",
-                        "type": "string"
-                    }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "inputs": [],
-                "name": "beneficiary",
-                "outputs": [
-                    {
-                        "internalType": "address payable",
-                        "name": "",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "description",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "",
-                        "type": "string"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "donate",
-                "outputs": [],
-                "stateMutability": "payable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "",
-                        "type": "address"
-                    }
-                ],
-                "name": "donations",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "finishTime",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "_address",
-                        "type": "address"
-                    }
-                ],
-                "name": "getInfo",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "name",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "",
-                        "type": "string"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "owner",
-                "outputs": [
-                    {
-                        "internalType": "address",
-                        "name": "",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "raisedAmount",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "targetAmount",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
-
         // 컨트랙트 객체 생성
         const contract = new ethers.Contract(address, fundraiserABI, provider);
+        // 모든 트랜잭션 가져오기
+        const events = await getEvents(provider, factoryAddress);
 
         // 컨트랙트 데이터 가져오기
         const name = await contract.name();
+        const contractOwner = await getFundraiserCreatorAddresses(provider, events, address);
+        
+        // 생성된 시간 가져오기
+        const blockNumber = await getContractCreationBlock(provider, events, address);
+        const timestamp = await getBlockTimestamp(provider, blockNumber);
+        const creationDate = new Date(timestamp * 1000).toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true
+        });
+
         const description = await contract.description();
-        const targetAmount = ethers.utils.formatEther(await contract.targetAmount());
-        const finishTime = new Date((await contract.finishTime()).toNumber() * 1000).toLocaleString();
-        const raisedAmount = ethers.utils.formatEther(await contract.raisedAmount());
-        let image = null;
-        if (!contract.image) {
-            image = "images/donationBox.png";
+        const targetAmount = ethers.utils.formatUnits(await contract.targetAmount(), 'gwei');
+        const finishTime = new Date((await contract.finishTime()).toNumber() * 1000).toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true
+        });
+        const raisedAmount = ethers.utils.formatUnits(await contract.raisedAmount(), 'gwei');
+        const image = contract.image || "images/donationBox.png";
+
+        // _items 데이터 가져오기
+        let items = [];
+        let index = 0;
+        while (true) {
+            try {
+                const item = await contract.items(index);
+                items.push(item);
+                index++;
+            } catch (error) {
+                break; // 더 이상 항목이 없으면 루프 종료
+            }
         }
-        //const image = "images/donationBox.png";        
+
         // 페이지에 표시할 내용 생성
         const detailsDiv = document.getElementById('fundraiserDetails');
         detailsDiv.innerHTML = `
             <h1 class="fundraiserTitle">${name}</h1>
-            <img class="fundraiserImage" src=${image} title="fundraiserImage">
+            <div class="contractMetaData">
+                <div class="profile">
+                    <minidenticon-svg class="profileImage" username="${contractOwner}"></minidenticon-svg>
+                    <p class="contractOwner" fullAddress="${contractOwner}">${trimAddress(contractOwner)}</p>
+                </div>
+                <p class="creationTime">${creationDate}</p>
+            </div>
+            <img class="fundraiserImage" src="${image}" title="fundraiserImage">
             <p class="fundraiserDescription">${description}</p>
-            <p>Target Amount: ${targetAmount} ETH</p>
-            <p>Finish Time: ${finishTime}</p>
-            <p>Raised Amount: ${raisedAmount} ETH</p>
+            <p class="fundraiserFinishTime">${finishTime} 마감</p>
+
+            <div class="fundraisingStatus">
+            <div class="raisedAmount"><b>${parseInt(raisedAmount).toLocaleString()} GWEI</b> 후원되었어요</div>
+            <div class="progressPercentage">${(raisedAmount / targetAmount * 100).toFixed(1)}%</div>
+            </div>
+            <div class="progressBarContainer">
+                <div class="progressBar" style="width: ${(raisedAmount / targetAmount * 100)}%;"></div>
+            </div>
+            <div class="supporterInfo">
+                <span class="targetAmount">${parseInt(targetAmount).toLocaleString()} GWEI 목표</span>
+            </div>
+
+            <div class="items">
+                <h3 style="text-align: left;">Items</h3>
+                <ul>
+                    ${items.map(item => `
+                        <div class="itemInfo">
+                            <div class="itemNamePrice">
+                                <p class="itemName">${item.name}</p>
+                                <p class="itemPrice">개당 ${parseInt(ethers.utils.formatUnits(item.price.mul(ethers.BigNumber.from('1000000000')), 'gwei')).toLocaleString()} GWEI</p>
+                            </div>
+                            <div class="itemDetails">
+                                <p class="itemQuantity">${item.quantity}개</p>
+                                <p class="totalPrice">총 ${parseInt(ethers.utils.formatUnits(item.price.mul(item.quantity).mul(ethers.BigNumber.from('1000000000')), 'gwei')).toLocaleString()} GWEI</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </ul>
+            </div>
         `;
+
+        document.querySelector('.contractOwner').addEventListener('click', () => {
+            copyToClipboard(contractOwner);
+        });
+
+        var modal = document.getElementsByClassName('donateModal')[0];
+        var donateModalOpenButton = document.getElementById('donateModalOpenButton');
+        var closeButton = document.querySelector('.donateModal .donateModalClose');
+        var donateAmountInput = document.getElementById('donateAmount');
+        var donateButton = document.querySelector('.donateButton');
+        donateModalOpenButton.addEventListener('click', function() {
+            modal.style.display = "flex";
+            modal.style.animation = "fadeIn 0.2s";
+            donateAmountInput.value = '';
+        });
+        
+        // Function to close modal
+        function closeModal() {
+            modal.style.animation = "fadeOut 0.2s";
+        }
+
+        modal.addEventListener('animationend', (event) => {
+            if (event.animationName === 'fadeOut') {
+                modal.style.display = "none";
+            }
+        });
+
+        closeButton.addEventListener('click', closeModal);
+
+        donateButton.addEventListener('click', async function() {
+            try {
+                const signer = provider.getSigner(); // 서명자 가져오기
+                const signedContract = contract.connect(signer); // 서명자로 계약 연결
+        
+                const donateAmountGwei = donateAmountInput.value; // Input 값 가져오기
+                // Gwei를 Ether로 변환
+                const donateAmountEther = ethers.utils.formatUnits(donateAmountGwei, 'gwei');
+
+                const tx = await signedContract.donate({
+                    value: ethers.utils.parseEther(donateAmountEther), // 기부 금액 (Ether)
+                    gasLimit: 300000
+                });
+        
+                await tx.wait();
+                alert('Donation successful!');
+            } catch (error) {
+                console.error('Donation failed:', error);
+        
+                // 상세한 오류 메시지를 위해 추가
+                if (error.code === 'CALL_EXCEPTION') {
+                    alert('Smart contract call exception. Please check the contract conditions.');
+                } else if (error.code === 'INSUFFICIENT_FUNDS') {
+                    alert('Insufficient funds in your account.');
+                } else if (error.code === 'NETWORK_ERROR') {
+                    alert('Network error. Please try again later.');
+                } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+                    alert('Cannot estimate gas; transaction may fail or may require manual gas limit.');
+                } else {
+                    alert(`Donation failed: ${error.message}`);
+                }
+            }
+        });
+
         animation.endTask();
     } catch (error) {
         console.error('Error fetching contract details:', error);
@@ -214,20 +263,45 @@ async function fetchAndDisplayFundraiserDetails(provider, address) {
     }
 }
 
+
+
+// 기부 함수
+/*async function donate(donateAmount, contract, provider) {
+    try {
+        const signer = provider.getSigner(); // 서명자 가져오기
+        const signedContract = contract.connect(signer); // 서명자로 계약 연결
+
+        const tx = await signedContract.donate({
+            value: ethers.utils.parseEther(donateAmount), // 기부 금액 (ETH)
+            gasLimit: 300000
+        });
+
+        await tx.wait();
+        alert('Donation successful!');
+    } catch (error) {
+        console.error('Donation failed:', error);
+
+        // 상세한 오류 메시지를 위해 추가
+        if (error.code === 'CALL_EXCEPTION') {
+            alert('Smart contract call exception. Please check the contract conditions.');
+        } else if (error.code === 'INSUFFICIENT_FUNDS') {
+            alert('Insufficient funds in your account.');
+        } else if (error.code === 'NETWORK_ERROR') {
+            alert('Network error. Please try again later.');
+        } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+            alert('Cannot estimate gas; transaction may fail or may require manual gas limit.');
+        } else {
+            alert(`Donation failed: ${error.message}`);
+        }
+    }
+}*/
+
+
 // 메인 실행
 (async function() {
     if (contractAddress) {
         const provider = await initializeProvider();
-        await fetchAndDisplayFundraiserDetails(provider, contractAddress);
-    } else {
-        document.getElementById('fundraiserDetails').innerHTML = '<p>No contract address provided.</p>';
-    }
-
-    if (contractAddress) {
-        animation.startTask(); // 로딩 시작
-        const provider = await initializeProvider();
-        await fetchAndDisplayFundraiserDetails(provider, contractAddress);
-        animation.endTask(); // 로딩 종료
+        await fetchAndDisplayFundraiserDetails(provider, contractAddress, fundraiserFactoryAddress);
     } else {
         document.getElementById('fundraiserDetails').innerHTML = '<p>No contract address provided.</p>';
     }
