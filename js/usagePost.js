@@ -1,6 +1,7 @@
 import { LoadingAnimation } from './LoadingAnimation.js';
 import { minidenticonSvg } from 'https://cdn.jsdelivr.net/npm/minidenticons@4.2.1/minidenticons.min.js';
 import { fundraiserFactoryAddress, fundraiserFactoryABI, fundraiserABI } from './contractConfig.js';
+import { uploadFile, getFile } from './ipfs.js';
 
 
 const animation = new LoadingAnimation('../images/loadingAnimation.json');
@@ -19,7 +20,6 @@ async function initializeProvider() {
     return { provider, connectedAddress };
 }
 
-
 async function getEvents(provider, fundraiserFactoryAddress) {
     const fundraiserFactory = new ethers.Contract(fundraiserFactoryAddress, fundraiserFactoryABI, provider);
 
@@ -28,6 +28,7 @@ async function getEvents(provider, fundraiserFactoryAddress) {
     const events = await fundraiserFactory.queryFilter(fundraiserFactory.filters.FundraiserCreated(), fromBlock, toBlock);
     return events;
 }
+
 
 async function getFundraiserCreatorAddresses(provider, events, _fundraiserAddress) {
     for (let event of events) {
@@ -73,7 +74,6 @@ function copyToClipboard(text) {
     }
 }
 
-
 // 트랜잭션 해시를 이용하여 생성된 블록 번호를 가져오는 함수
 async function getContractCreationBlock(provider, events, _fundraiserAddress) {
     for (let event of events) {
@@ -92,15 +92,6 @@ async function getBlockTimestamp(provider, blockNumber) {
     return block.timestamp;
 }
 
-// 남은 금액 계산하기
-/*function remainingGoal(item) {
-    console.log(item.name);
-    const totalPrice = item.price * item.quantity;
-    const remainingGoal = targetAmount - totalPrice;
-    return remainingGoal;
-}*/
-
-// 컨트랙트 정보를 가져와 페이지에 표시하는 함수
 async function fetchAndDisplayFundraiserDetails(provider, connectedAddress, address, factoryAddress) {
     try {
         animation.startTask();
@@ -177,110 +168,7 @@ async function fetchAndDisplayFundraiserDetails(provider, connectedAddress, addr
             <div class="supporterInfo">
                 <span class="targetAmount">${parseInt(targetAmount).toLocaleString()} GWEI 목표</span>
             </div>
-
-            <div class="items">
-                <h3 style="text-align: left;">Items</h3>
-                <ul>
-                    ${items.map(item => `
-                        <div class="itemInfo">
-                            <div class="itemNamePrice">
-                                <p class="itemName">${item.name}</p>
-                                <p class="itemPrice">개당 ${parseInt(ethers.utils.formatUnits(item.price.mul(ethers.BigNumber.from('1000000000')), 'gwei')).toLocaleString()} GWEI</p>
-                            </div>
-                            <div class="itemDetails">
-                                <p class="itemQuantity">${item.quantity}개</p>
-                                <p class="totalPrice">총 ${parseInt(ethers.utils.formatUnits(item.price.mul(item.quantity).mul(ethers.BigNumber.from('1000000000')), 'gwei')).toLocaleString()} GWEI</p>
-                            </div>
-                        </div>
-                    `).join('')}
-                </ul>
-            </div>
         `;
-
-        document.querySelector('.contractOwner').addEventListener('click', () => {
-            copyToClipboard(contractOwner);
-        });
-
-        var modal = document.getElementsByClassName('donateModal')[0];
-        var donateModalOpenButton = document.getElementById('donateModalOpenButton');
-        var closeButton = document.querySelector('.donateModal .donateModalClose');
-        var donateAmountInput = document.getElementById('donateAmount');
-        var donateButton = document.querySelector('.donateButton');
-
-
-        // 현재 시각과 마감 시각 비교
-        if (new Date().getTime() > new Date((await contract.finishTime()).toNumber() * 1000).getTime()) {
-            // 마감되었고, 연결된 주소와 컨트랙트 생성자 주소가 같을 경우 usage 등록 버튼 생성
-            if (connectedAddress == contractOwner.toLowerCase()) {
-                // 후원 버튼 숨기기
-                document.querySelector('#donateModalOpenButton').style = 'display: none;';
-                // 사용 내역 등록 버튼 보이기
-                document.querySelector('#uploadUsageButton').style = 'display: block;';
-
-                const uploadUsageAddress = "usagePost.html?contractAddress=" + contractAddress;
-                document.querySelector('#uploadUsageButton').addEventListener('click', function() {
-                    window.location.href = uploadUsageAddress;
-                });
-            }
-            else {
-                document.querySelector('#donateModalOpenButton').disabled = true;
-                document.querySelector('#donateModalOpenButton').textContent = "마감되었어요";
-                document.querySelector('#donateModalOpenButton').style = 'background: #e0e0e0; color: white;';
-            }
-        }
-
-        donateModalOpenButton.addEventListener('click', function() {
-            modal.style.display = "flex";
-            modal.style.animation = "fadeIn 0.2s";
-            donateAmountInput.value = '';
-        });
-        
-        // Function to close modal
-        function closeModal() {
-            modal.style.animation = "fadeOut 0.2s";
-        }
-
-        modal.addEventListener('animationend', (event) => {
-            if (event.animationName === 'fadeOut') {
-                modal.style.display = "none";
-            }
-        });
-
-        closeButton.addEventListener('click', closeModal);
-
-        donateButton.addEventListener('click', async function() {
-            try {
-                const signer = provider.getSigner(); // 서명자 가져오기
-                const signedContract = contract.connect(signer); // 서명자로 계약 연결
-        
-                const donateAmountGwei = donateAmountInput.value; // Input 값 가져오기
-                // Gwei를 Ether로 변환
-                const donateAmountEther = ethers.utils.formatUnits(donateAmountGwei, 'gwei');
-
-                const tx = await signedContract.donate({
-                    value: ethers.utils.parseEther(donateAmountEther), // 기부 금액 (Ether)
-                    gasLimit: 300000
-                });
-        
-                await tx.wait();
-                alert('Donation successful!');
-            } catch (error) {
-                console.error('Donation failed:', error);
-        
-                // 상세한 오류 메시지를 위해 추가
-                if (error.code === 'CALL_EXCEPTION') {
-                    alert('Smart contract call exception. Please check the contract conditions.');
-                } else if (error.code === 'INSUFFICIENT_FUNDS') {
-                    alert('Insufficient funds in your account.');
-                } else if (error.code === 'NETWORK_ERROR') {
-                    alert('Network error. Please try again later.');
-                } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
-                    alert('Cannot estimate gas; transaction may fail or may require manual gas limit.');
-                } else {
-                    alert(`Donation failed: ${error.message}`);
-                }
-            }
-        });
 
         animation.endTask();
     } catch (error) {
@@ -290,39 +178,27 @@ async function fetchAndDisplayFundraiserDetails(provider, connectedAddress, addr
     }
 }
 
-
-
-// 기부 함수
-/*async function donate(donateAmount, contract, provider) {
-    try {
-        const signer = provider.getSigner(); // 서명자 가져오기
-        const signedContract = contract.connect(signer); // 서명자로 계약 연결
-
-        const tx = await signedContract.donate({
-            value: ethers.utils.parseEther(donateAmount), // 기부 금액 (ETH)
-            gasLimit: 300000
-        });
-
-        await tx.wait();
-        alert('Donation successful!');
-    } catch (error) {
-        console.error('Donation failed:', error);
-
-        // 상세한 오류 메시지를 위해 추가
-        if (error.code === 'CALL_EXCEPTION') {
-            alert('Smart contract call exception. Please check the contract conditions.');
-        } else if (error.code === 'INSUFFICIENT_FUNDS') {
-            alert('Insufficient funds in your account.');
-        } else if (error.code === 'NETWORK_ERROR') {
-            alert('Network error. Please try again later.');
-        } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
-            alert('Cannot estimate gas; transaction may fail or may require manual gas limit.');
-        } else {
-            alert(`Donation failed: ${error.message}`);
-        }
+document.getElementById('registerUsage').addEventListener('click', async () => {
+    const usageDescription = document.getElementById('usageDescription').value;
+    
+    if (!usageDescription) {
+        alert('Please enter a description.');
+        return;
     }
-}*/
 
+    const jsonContent = {
+        description: usageDescription
+    };
+
+    const jsonString = JSON.stringify(jsonContent);
+
+    // IPFS에 JSON 파일 업로드
+    const ipfsPath = await uploadFile(jsonString);
+    
+    if (ipfsPath) {
+        alert('File successfully uploaded to IPFS. Path: ' + ipfsPath);
+    }
+});
 
 // 메인 실행
 (async function() {

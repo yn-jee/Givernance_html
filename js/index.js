@@ -1,21 +1,12 @@
-const fs = require('fs');
-const https = require('https');
-const express = require('express');
-const app = express();
-const path = require('path');
+import { createHelia } from 'helia';
+import { json } from '@helia/json';
 
+async function main() {
+    const helia = await createHelia();
+    const heliaJson = json(helia);
 
-app.use(express.static(path.join(__dirname, '../')));
+    console.log('Helia instance created:', helia);
+    console.log('Helia JSON instance created:', heliaJson);
+}
 
-// 루트 경로에 대한 요청을 처리
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../index.html'));
-});
-
-https.createServer({
-  key: fs.readFileSync('localhost.key'),
-  cert: fs.readFileSync('localhost.crt')
-}, app).listen(3000, '0.0.0.0', () => {
-  console.log('HTTPS server running on https://localhost:3000');
-});
-
+main().catch(console.error);
