@@ -1,7 +1,10 @@
 import { LoadingAnimation } from './LoadingAnimation.js';
 import { minidenticonSvg } from 'https://cdn.jsdelivr.net/npm/minidenticons@4.2.1/minidenticons.min.js';
 import { fundraiserFactoryAddress, fundraiserFactoryABI, fundraiserABI } from './contractConfig.js';
-import { uploadFile, getFile } from './ipfs.js';
+//import { uploadTextToIPFS, downloadTextFromIPFS } from './ipfs.js';
+// import { createHeliaHTTP } from "@helia/http";
+// import { unixfs } from "@helia/unixfs";
+import { deployGiversToken, deployGiver, GiversTokenABI, GiversTokenBytecode, GiverABI, GiverBytecode } from "./tokenDeploy.js";
 
 
 const animation = new LoadingAnimation('../images/loadingAnimation.json');
@@ -9,6 +12,54 @@ await animation.loadAnimation();
 
 const urlParams = new URLSearchParams(window.location.search);
 const contractAddress = urlParams.get('contractAddress'); // 'contractAddress' 파라미터의 값 가져오기
+
+
+async function createHeliaInstance() {
+    const helia = await createHeliaHTTP({
+        url: 'http://localhost:5001' // IPFS 데몬의 HTTP API 엔드포인트
+    });
+    return helia;
+}
+
+// 파일 업로드 함수
+export async function uploadTextToIPFS(textData) {
+    try {
+        const helia = await createHeliaInstance();
+        const heliaFs = unixfs(helia);
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(textData);
+        const fileCid = await heliaFs.addBytes(bytes);
+
+        return {
+            message: 'Text uploaded successfully',
+            data: textData,
+            cid: fileCid.toString()
+        };
+    } catch (error) {
+        console.error('Error uploading text:', error);
+        throw new Error('Internal Server Error');
+    }
+}
+
+// 파일 다운로드 함수
+export async function downloadTextFromIPFS(cid) {
+    try {
+        const helia = await createHeliaInstance();
+        const heliaFs = unixfs(helia);
+        const decoder = new TextDecoder();
+        let text = "";
+
+        for await (const chunk of heliaFs.cat(CID.parse(cid))) {
+            text += decoder.decode(chunk, {
+                stream: true,
+            });
+        }
+        return text;
+    } catch (error) {
+        console.error('Error downloading text:', error);
+        throw new Error('Internal Server Error');
+    }
+}
 
 // 이더리움 프로바이더 초기화
 async function initializeProvider() {
@@ -168,7 +219,62 @@ async function fetchAndDisplayFundraiserDetails(provider, connectedAddress, addr
             <div class="supporterInfo">
                 <span class="targetAmount">${parseInt(targetAmount).toLocaleString()} GWEI 목표</span>
             </div>
+
+            <div class="items">
+                <h3 style="text-align: left;">Items</h3>
+                <ul>
+                    ${items.map(item => `
+                        <div class="itemInfo">
+                            <div class="itemNamePrice">
+                                <p class="itemName">${item.name}</p>
+                                <p class="itemPrice">개당 ${parseInt(ethers.utils.formatUnits(item.price.mul(ethers.BigNumber.from('1000000000')), 'gwei')).toLocaleString()} GWEI</p>
+                            </div>
+                            <div class="itemDetails">
+                                <p class="itemQuantity">${item.quantity}개</p>
+                                <p class="totalPrice">총 ${parseInt(ethers.utils.formatUnits(item.price.mul(item.quantity).mul(ethers.BigNumber.from('1000000000')), 'gwei')).toLocaleString()} GWEI</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </ul>
+            </div>
         `;
+        // // IPFS에 업로드할 plain string 데이터
+        // const plainStringData = "This is a plain string to upload to IPFS...";
+
+        // // IPFSUpload 함수 정의
+        // async function IPFSUpload(data) {
+        //     try {
+        //         const url = `${window.location.origin}/api/IPFSUpload`;
+
+        //         const response = await fetch(url, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json'
+        //             },
+        //             body: JSON.stringify({ data })
+        //         });
+
+        //         console.log(`Request body: ${JSON.stringify({ data })}`);
+
+        //         if (!response.ok) {
+        //             throw new Error(`HTTP error! status: ${response.status}`);
+        //         }
+
+        //         const responseData = await response.json();
+        //         console.log('Response from server:', responseData);
+
+        //         // CID로 IPFS에서 파일 검색
+        //         const cid = responseData.cid;
+        //         console.log(`File CID: ${cid}`);
+        //         const fileUrl = `https://ipfs.io/ipfs/${cid}`;
+        //         console.log(`IPFS file URL: ${fileUrl}`);
+        //     } catch (error) {
+        //         console.error('Error uploading data:', error);
+        //     }
+        // };
+
+        // // IPFSUpload 함수 호출
+        // IPFSUpload(plainStringData);
 
         animation.endTask();
     } catch (error) {
@@ -179,6 +285,7 @@ async function fetchAndDisplayFundraiserDetails(provider, connectedAddress, addr
 }
 
 document.getElementById('registerUsage').addEventListener('click', async () => {
+    console.log('button clicked');
     const usageDescription = document.getElementById('usageDescription').value;
     
     if (!usageDescription) {
@@ -193,12 +300,16 @@ document.getElementById('registerUsage').addEventListener('click', async () => {
     const jsonString = JSON.stringify(jsonContent);
 
     // IPFS에 JSON 파일 업로드
-    const ipfsPath = await uploadFile(jsonString);
+    const ipfsPath = await uploadTextToIPFS(jsonString);
     
     if (ipfsPath) {
         alert('File successfully uploaded to IPFS. Path: ' + ipfsPath);
     }
 });
+
+
+
+
 
 // 메인 실행
 (async function() {
